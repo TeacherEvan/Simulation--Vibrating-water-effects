@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.pyo
+*.so
+*.egg-info/
+*.egg
+*.whl
+*.log
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+.env
+.env.*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Data / outputs
+logs/
+outputs/
+exports/
+recordings/
+reports/
+*.csv
+*.json
+*.h5
+*.hdf5
+*.sqlite
+*.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+
+# Taichi
+.taichi/
+
+# Panda3D
+*.bam
+*.egg
+*.egg.pz
+
+# Shaders cache
+*.cache
