@@ -1,0 +1,19 @@
+Create a realistic 3D simulation for a theoretical physics experiment involving water vibrations in a spherical glass tank, incorporating best practices for accurate physics simulations sourced from multiple reliable references (e.g., fluid dynamics textbooks, physics engines like Unreal Engine or Unity, and scientific papers on thermodynamics and vibrational mechanics). The simulation must feature high-quality, visually immersive graphics rendering real-time events with precise accuracy.
+
+**Visual Elements:**
+- A spherical tank filled with water, encased in breakable glass that shatters realistically if the water becomes unstable due to excessive heat, vibration, or other disruptive forces. Display shattering effects with particle systems and dynamic deformation.
+- High-fidelity frontend interface showing the simulation in 3D, including fluid ripple effects, heat distortions, electromagnetic charge visualizations, and accelerometer data overlays. Ensure photorealistic lighting, reflections, and fluid physics.
+
+**Manipulative Elements (All in Metric Units):**
+- Adjust glass density (kg/m³) to simulate varying material strengths and fragility.
+- Control water volume (liters or m³) to observe effects on oscillation and instability.
+- Set gravity level (as a multiplier compared to Earth's standard gravity, e.g., 0.5x to 2x, with 1x = 9.8 m/s²).
+- Manipulate a movable "point of influence" anywhere within or on the sphere, with the following parameters:
+  - Heat intensity: Adjust from 0°C to 100,000,000°C (absolute zero to extreme plasma states, affecting water phase changes and vibrational decay).
+  - Vibration properties: Set velocity (m/s), displacement (m), and acceleration (m/s²) within ranges from 0 to the speed of light (c ≈ 3×10^8 m/s), influencing wave propagation through the fluid.
+  - Vibration surface volume: Set the affected surface area in cubic meters (m³) for localized perturbation modeling.
+- Time speed control: Scale simulation time from 0.01x to 100x real-time for accelerated or slowed observation.
+- Accelerometer tool: Integrated sensor that automatically adjusts simulation parameters to achieve specific readings (e.g., target vibrations or accelerations), with real-time output of g-forces and vector data.
+- Water charge: Modify the electrical charge (Coulombs, from -10^6 C to +10^6 C) to simulate electromagnetic interactions and potential plasma effects.
+
+All elements must interact dynamically with realistic physics, including Newtonian mechanics, thermodynamics, wave equations, and electromagnetic interactions. The backend code shall be scripted in Python using libraries like Pygame or Panda3D for 3D rendering, PyBullet or Matter.js for physics simulation, ensuring modularity, extensibility, and integration with data logging for analysis. Implement user controls via a GUI for real-time adjustment, with exportable data logs for experimental insights. Validate simulations against established scientific theories and allow for scenario resets/pauses.
