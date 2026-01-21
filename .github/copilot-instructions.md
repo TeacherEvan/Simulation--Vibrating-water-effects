@@ -48,3 +48,7 @@ The codebase follows a modular structure in `src/`:
 - Unit tests for physics should compare `NumpySPHSolver` single-step output against analytical solutions where possible.
 - System tests should exercise end-to-end simulation paths, performance benchmarks, and stress scenarios.
 - If Panda3D is unavailable, use the stub classes and feature flags in `visual_effects_manager.py` to keep tests runnable.
+- For local runs on Windows, prefer the workspace `.venv` and run tests with:
+  ```
+  .venv\Scripts\python.exe -m pytest -q
+  ```

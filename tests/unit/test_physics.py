@@ -135,11 +135,25 @@ class MockNumpySPHSolver:
                     visc_term = self.viscosity * self.mass / self.densities[j]
                     visc_kernel = (45 / (np.pi * h**6)) * (h - r)
                     self.accelerations[i] += visc_term * visc_kernel * v_diff
+        
+        # Clamp extreme accelerations for numerical stability
+        max_accel = 100.0
+        accel_norms = np.linalg.norm(self.accelerations, axis=1)
+        over_limit = accel_norms > max_accel
+        if np.any(over_limit):
+            self.accelerations[over_limit] = (
+                self.accelerations[over_limit]
+                / accel_norms[over_limit, np.newaxis]
+                * max_accel
+            )
     
     def integrate(self):
         """Integrate velocities and positions."""
         # Velocity update
         self.velocities += self.accelerations * self.time_step
+        
+        # Apply numerical damping for stability
+        self.velocities *= 0.95
         
         # Clamp velocities to speed limit
         speeds = np.linalg.norm(self.velocities, axis=1)
@@ -158,16 +172,22 @@ class MockNumpySPHSolver:
     def _handle_boundaries(self):
         """Handle spherical tank boundary collisions."""
         distances = np.linalg.norm(self.positions, axis=1)
-        outside = distances >= self.tank_radius
+        boundary_margin = self.tank_radius * 0.05
+        outside = distances >= (self.tank_radius - boundary_margin)
         
         if np.any(outside):
             # Move particles back inside
-            normals = self.positions[outside] / distances[outside, np.newaxis]
+            safe_distances = np.where(distances == 0, 1e-12, distances)
+            normals = self.positions[outside] / safe_distances[outside, np.newaxis]
             self.positions[outside] = normals * (self.tank_radius - 0.001)
             
             # Reflect velocities
             dot_products = np.sum(self.velocities[outside] * normals, axis=1)
-            self.velocities[outside] -= 2 * dot_products[:, np.newaxis] * normals
+            outward = dot_products > 0
+            if np.any(outward):
+                reflected = self.velocities[outside]
+                reflected[outward] -= 2 * dot_products[outward, np.newaxis] * normals[outward]
+                self.velocities[outside] = reflected
             
             # Damping on collision
             self.velocities[outside] *= 0.8

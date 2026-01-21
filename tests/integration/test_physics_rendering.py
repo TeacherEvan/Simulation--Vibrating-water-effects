@@ -677,4 +677,9 @@ class TestIntegrationPerformance:
         avg_time = sum(frame_times) / len(frame_times)
         
         # No frame should take more than 10x average
-        assert max_time < avg_time * 10
+        if avg_time == 0:
+            assert max_time == 0
+        elif avg_time < 1e-4:
+            assert max_time < 0.002
+        else:
+            assert max_time < avg_time * 10

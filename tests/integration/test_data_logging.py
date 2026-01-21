@@ -202,6 +202,8 @@ class MockSQLiteEventLogger:
     def log_event(self, event_type, message, severity='info', data=None):
         """Log a general event."""
         import json
+        if self.conn is None:
+            return
         cursor = self.conn.cursor()
         cursor.execute(
             'INSERT INTO events (timestamp, event_type, severity, message, data) VALUES (?, ?, ?, ?, ?)',
@@ -211,6 +213,8 @@ class MockSQLiteEventLogger:
     
     def log_lod_switch(self, from_mode, to_mode, particle_count, frame_time):
         """Log an LOD mode switch."""
+        if self.conn is None:
+            return
         cursor = self.conn.cursor()
         cursor.execute(
             'INSERT INTO lod_switches (timestamp, from_mode, to_mode, particle_count, frame_time) VALUES (?, ?, ?, ?, ?)',
@@ -220,6 +224,8 @@ class MockSQLiteEventLogger:
     
     def log_warning(self, warning_type, value, threshold, message):
         """Log a warning (e.g., velocity exceeding limit)."""
+        if self.conn is None:
+            return
         cursor = self.conn.cursor()
         cursor.execute(
             'INSERT INTO warnings (timestamp, warning_type, value, threshold, message) VALUES (?, ?, ?, ?, ?)',
@@ -229,6 +235,8 @@ class MockSQLiteEventLogger:
     
     def get_events(self, event_type=None, limit=100):
         """Retrieve events, optionally filtered by type."""
+        if self.conn is None:
+            return []
         cursor = self.conn.cursor()
         if event_type:
             cursor.execute(
@@ -241,19 +249,26 @@ class MockSQLiteEventLogger:
     
     def get_lod_switches(self, limit=100):
         """Retrieve LOD switch events."""
+        if self.conn is None:
+            return []
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM lod_switches ORDER BY timestamp DESC LIMIT ?', (limit,))
         return cursor.fetchall()
     
     def get_warnings(self, limit=100):
         """Retrieve warnings."""
+        if self.conn is None:
+            return []
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM warnings ORDER BY timestamp DESC LIMIT ?', (limit,))
         return cursor.fetchall()
     
     def close(self):
         """Close database connection."""
+        if self.conn is None:
+            return
         self.conn.close()
+        self.conn = None
 
 
 class MockHybridLogger:
@@ -262,6 +277,7 @@ class MockHybridLogger:
     def __init__(self, output_dir, session_name=None):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self._closed = False
         
         session_name = session_name or datetime.now().strftime('%Y%m%d_%H%M%S')
         
@@ -293,9 +309,12 @@ class MockHybridLogger:
     
     def close(self):
         """Close all loggers."""
+        if self._closed:
+            return
         self.event_logger.log_event('session', 'Session ended', severity='info')
         self.hdf5_logger.close()
         self.event_logger.close()
+        self._closed = True
 
 
 # =============================================================================
