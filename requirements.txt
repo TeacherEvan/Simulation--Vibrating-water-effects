@@ -1,0 +1,20 @@
+# Core Physics & Simulation
+taichi>=1.7.0
+numpy>=1.26.0
+scipy>=1.11.0
+
+# Rendering & Visuals
+panda3d>=1.10.14
+moderngl>=5.8.0  # Optional backend support if needed later
+
+# GUI & Interaction
+dearpygui>=1.10.0
+
+# Data & Logging
+h5py>=3.10.0
+zstandard>=0.22.0
+
+# Development & CI
+pytest>=8.0.0
+flake8>=7.0.0
+mypy>=1.9.0

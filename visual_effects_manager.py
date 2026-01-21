@@ -6,16 +6,96 @@ Compatible with Panda3D 1.10+ and NVIDIA A10G GPU
 Target: 60 FPS with 10k SPH particles
 """
 
-from panda3d.core import (
-    Shader, Texture, CardMaker, NodePath, Camera, 
-    GraphicsOutput, FrameBufferProperties, WindowProperties,
-    Lens, PerspectiveLens, OrthographicLens,
-    LVector2f, LVector3f, LVector4f, LMatrix4f, LPoint3f,
-    TextureStage, SamplerState, GeomEnums,
-    ComputeNode, ShaderAttrib
-)
-from direct.filter.FilterManager import FilterManager
-from direct.showbase.DirectObject import DirectObject
+try:
+    from panda3d.core import (
+        Shader, Texture, CardMaker, NodePath, Camera,
+        GraphicsOutput, FrameBufferProperties, WindowProperties,
+        Lens, PerspectiveLens, OrthographicLens,
+        LVector2f, LVector3f, LVector4f, LMatrix4f, LPoint3f,
+        TextureStage, SamplerState, GeomEnums,
+        ComputeNode, ShaderAttrib, ClockObject
+    )
+    from direct.filter.FilterManager import FilterManager
+    from direct.showbase.DirectObject import DirectObject
+    PANDA3D_AVAILABLE = True
+except ImportError:
+    # Fallback stubs for testing without Panda3D installed
+    PANDA3D_AVAILABLE = False
+    
+    class DirectObject:
+        """Stub class for testing without Panda3D."""
+        def accept(self, event, callback):
+            pass
+    
+    class LVector2f:
+        def __init__(self, *args): pass
+    
+    class LVector3f:
+        def __init__(self, *args):
+            self.x = args[0] if len(args) > 0 else 0.0
+            self.y = args[1] if len(args) > 1 else 0.0
+            self.z = args[2] if len(args) > 2 else 0.0
+        def normalize(self): pass
+        def __mul__(self, other): return self
+        def __imul__(self, other): return self
+    
+    class LVector4f:
+        def __init__(self, *args): pass
+    
+    class LMatrix4f:
+        def __init__(self, *args): pass
+    
+    class LPoint3f:
+        def __init__(self, *args): pass
+    
+    class Texture:
+        T_float = 0
+        F_rgba16 = 0
+        F_rgba32 = 0
+        F_r32 = 0
+        WM_repeat = 0
+        FT_nearest = 0
+        def __init__(self, name=""): pass
+        def setup_2d_texture(self, *args): pass
+        def setup_buffer_texture(self, *args): pass
+        def setRamImage(self, data): pass
+        def setWrapU(self, mode): pass
+        def setWrapV(self, mode): pass
+        def setMagfilter(self, f): pass
+        def setMinfilter(self, f): pass
+    
+    class Shader:
+        SL_GLSL = 0
+        @staticmethod
+        def load(*args, **kwargs): return None
+        @staticmethod
+        def load_compute(*args): return None
+    
+    class GeomEnums:
+        UH_dynamic = 0
+    
+    class ComputeNode:
+        def __init__(self, name): pass
+        def add_dispatch(self, *args): pass
+    
+    class FilterManager:
+        def __init__(self, win, cam): pass
+        def renderSceneInto(self, **kwargs): return MockNodePath()
+    
+    class MockNodePath:
+        def setShader(self, shader): pass
+        def setShaderInput(self, name, value): pass
+        def attach_new_node(self, node): return self
+        def getPos(self): return LVector3f(0, 0, 0)
+    
+    class ClockObject:
+        @staticmethod
+        def getGlobalClock():
+            return _MockClock()
+    
+    class _MockClock:
+        def getDt(self): return 0.016
+
 import numpy as np
 import random
 import math
@@ -558,44 +638,47 @@ class GPUParticleSystem:
 
 # Example usage
 if __name__ == "__main__":
-    from direct.showbase.ShowBase import ShowBase
-    
-    class WaterSimApp(ShowBase):
-        def __init__(self):
-            ShowBase.__init__(self)
-            
-            # Initialize visual effects
-            self.vfx = VisualEffectsManager(self, {
-                'bloom_enabled': True,
-                'ssao_enabled': True,
-                'dynamic_quality': True
-            })
-            
-            # Create water surface (example)
-            # self.water_node = self.loader.loadModel("models/water_plane")
-            # self.water_shader = WaterShaderManager(self, self.water_node)
-            
-            # Create glass sphere (example)
-            # self.sphere_node = self.loader.loadModel("models/glass_sphere")
-            # self.glass_shader = GlassSphereShaderManager(self, self.sphere_node)
-            
-            # Create particle system
-            # self.particles = GPUParticleSystem(self, max_particles=10000)
-            
-            # Update task
-            self.time = 0.0
-            self.taskMgr.add(self.update, "update")
-            
-        def update(self, task):
-            dt = globalClock.getDt()
-            self.time += dt
-            
-            self.vfx.update(dt)
-            # self.water_shader.update(dt, self.time)
-            # self.glass_shader.update(dt, self.time)
-            # self.particles.update(dt, self.time)
-            
-            return task.cont
-    
-    # app = WaterSimApp()
-    # app.run()
+    if PANDA3D_AVAILABLE:
+        from direct.showbase.ShowBase import ShowBase
+        
+        class WaterSimApp(ShowBase):
+            def __init__(self):
+                ShowBase.__init__(self)
+                
+                # Initialize visual effects
+                self.vfx = VisualEffectsManager(self, {
+                    'bloom_enabled': True,
+                    'ssao_enabled': True,
+                    'dynamic_quality': True
+                })
+                
+                # Create water surface (example)
+                # self.water_node = self.loader.loadModel("models/water_plane")
+                # self.water_shader = WaterShaderManager(self, self.water_node)
+                
+                # Create glass sphere (example)
+                # self.sphere_node = self.loader.loadModel("models/glass_sphere")
+                # self.glass_shader = GlassSphereShaderManager(self, self.sphere_node)
+                
+                # Create particle system
+                # self.particles = GPUParticleSystem(self, max_particles=10000)
+                
+                # Update task
+                self.time = 0.0
+                self.taskMgr.add(self.update, "update")
+                
+            def update(self, task):
+                dt = ClockObject.getGlobalClock().getDt()
+                self.time += dt
+                
+                self.vfx.update(dt)
+                # self.water_shader.update(dt, self.time)
+                # self.glass_shader.update(dt, self.time)
+                # self.particles.update(dt, self.time)
+                
+                return task.cont
+        
+        app = WaterSimApp()
+        app.run()
+    else:
+        print("Panda3D is not installed. Install with: pip install panda3d")
