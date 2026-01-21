@@ -15,8 +15,8 @@ try:
         TextureStage, SamplerState, GeomEnums,
         ComputeNode, ShaderAttrib, ClockObject
     )
-    from direct.filter.FilterManager import FilterManager
-    from direct.showbase.DirectObject import DirectObject
+    from direct.filter.FilterManager import FilterManager  # type: ignore[assignment]
+    from direct.showbase.DirectObject import DirectObject  # type: ignore[assignment]
     from direct.gui.DirectGui import DirectButton
     PANDA3D_AVAILABLE = True
 except ImportError:
