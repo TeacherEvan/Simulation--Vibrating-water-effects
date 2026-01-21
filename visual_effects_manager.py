@@ -17,11 +17,17 @@ try:
     )
     from direct.filter.FilterManager import FilterManager
     from direct.showbase.DirectObject import DirectObject
+    from direct.gui.DirectGui import DirectButton
     PANDA3D_AVAILABLE = True
 except ImportError:
     # Fallback stubs for testing without Panda3D installed
     PANDA3D_AVAILABLE = False
     
+    class DirectButton:
+        def __init__(self, *args, **kwargs): pass
+        def show(self): pass
+        def hide(self): pass
+
     class DirectObject:
         """Stub class for testing without Panda3D."""
         def accept(self, event, callback):
@@ -501,6 +507,7 @@ class GlassSphereShaderManager:
         """
         self.base = base
         self.sphere_node = sphere_node
+        self.is_broken = False
         
         # Load glass shader
         self.glass_shader = Shader.load(
@@ -522,7 +529,49 @@ class GlassSphereShaderManager:
             'interaction_strength': 0.0
         }
         
+        self._setup_ui()
         self._setup_shader()
+
+    def _setup_ui(self):
+        """Setup the refreshment UI."""
+        if not PANDA3D_AVAILABLE:
+            return
+
+        # Create a hidden refresh button
+        self.refresh_btn = DirectButton(
+            text="Reset Glass",
+            scale=0.07,
+            pos=(1.1, 0, -0.9),  # Bottom right
+            command=self.reset_glass,
+            text_fg=(1, 1, 1, 1),
+            frameColor=(0.2, 0.2, 0.2, 0.8)
+        )
+        self.refresh_btn.hide()
+
+    def break_glass(self):
+        """Simulate glass breaking and show reset button."""
+        if self.is_broken:
+            return
+            
+        self.is_broken = True
+        # Visually simulate damage by increasing roughness and interaction glow
+        self.params['roughness'] = 0.5 
+        self.params['interaction_strength'] = 2.0
+        self._setup_shader() # Re-apply params
+        
+        if hasattr(self, 'refresh_btn'):
+            self.refresh_btn.show()
+            
+    def reset_glass(self):
+        """Reset glass state and hide button."""
+        self.is_broken = False
+        self.params['roughness'] = 0.05
+        self.params['interaction_strength'] = 0.0
+        self._setup_shader() # Re-apply params
+        
+        if hasattr(self, 'refresh_btn'):
+            self.refresh_btn.hide()
+
         
     def _setup_shader(self):
         """Apply shader and set initial uniforms."""
