@@ -53,3 +53,4 @@ dist/
 
 # Shaders cache
 *.cache
+docs/.scratch-audit/
