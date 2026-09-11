@@ -456,10 +456,15 @@ class VisualEffectsManager(DirectObject):
         
         preset = quality_presets[self.current_quality_level]
         self.config.update(preset)
-        
-        # Regenerate SSAO kernel if needed
+
+        # Regenerate SSAO kernel only when sample count actually changes
+        # (avoids ~5-10ms stalls on every quality transition when unchanged)
         if self.config['ssao_enabled']:
-            self.ssao_kernel = self._generate_ssao_kernel(self.config['ssao_samples'])
+            new_samples = self.config['ssao_samples']
+            if not hasattr(self, '_ssao_kernel_samples') or \
+               self._ssao_kernel_samples != new_samples:
+                self.ssao_kernel = self._generate_ssao_kernel(new_samples)
+                self._ssao_kernel_samples = new_samples
             
     def _on_window_resize(self, window):
         """Handle window resize events."""
