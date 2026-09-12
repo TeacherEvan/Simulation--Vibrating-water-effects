@@ -482,8 +482,17 @@ class VisualEffectsManager(DirectObject):
         if self.config['bloom_enabled']:
             self.final_quad.setShaderInput("bloomIntensity", value)
             
+    # Effects this manager actually controls. Rejecting unknown names here
+    # prevents silently setting a uniform the shader never declares.
+    _KNOWN_EFFECTS = {'bloom', 'ssao', 'ssr', 'dof'}
+
     def toggle_effect(self, effect_name, enabled):
         """Enable or disable a specific effect."""
+        if effect_name not in self._KNOWN_EFFECTS:
+            raise ValueError(
+                f"Unknown effect '{effect_name}'. "
+                f"Known effects: {sorted(self._KNOWN_EFFECTS)}"
+            )
         key = f"{effect_name}_enabled"
         if key in self.config:
             self.config[key] = enabled
@@ -542,9 +551,21 @@ class WaterShaderManager:
         for i, wave in enumerate(self.waves):
             self.water_node.setShaderInput(f"wave{'ABCD'[i]}", wave)
             
-        # Set water parameters
+        # Set water parameters (explicit uniform-name map; the .frag declares
+        # camelCase uniforms, so a blanket key.replace('_', '') would silently
+        # set unknown names and leave the shader on its defaults)
+        uniform_map = {
+            'water_color': 'waterColor',
+            'deep_water_color': 'deepWaterColor',
+            'wave_strength': 'waveStrength',
+            'wave_speed': 'waveSpeed',
+            'shininess': 'shininess',
+            'foam_threshold': 'foamThreshold',
+            'max_depth': 'maxDepth',
+        }
         for key, value in self.params.items():
-            self.water_node.setShaderInput(key.replace('_', ''), value)
+            shader_key = uniform_map.get(key, key.replace('_', ''))
+            self.water_node.setShaderInput(shader_key, value)
             
         # Set camera/light info
         self.water_node.setShaderInput("cameraPos", self.base.cam.getPos())
@@ -653,8 +674,22 @@ class GlassSphereShaderManager:
         """Apply shader and set initial uniforms."""
         self.sphere_node.setShader(self.glass_shader)
         
+        # Explicit uniform-name map; glass_refraction.frag uses camelCase
+        # (glowColor, chromaticAberration, tintColor, ...). A blanket
+        # key.replace('_', '') would set unknown uniforms and silently no-op.
+        uniform_map = {
+            'IOR': 'IOR',
+            'chromatic_aberration': 'chromaticAberration',
+            'tint_color': 'tintColor',
+            'thickness': 'thickness',
+            'roughness': 'roughness',
+            'glow_color': 'glowColor',
+            'glow_intensity': 'glowIntensity',
+            'glow_power': 'glowPower',
+            'interaction_strength': 'interactionStrength',
+        }
         for key, value in self.params.items():
-            shader_key = key.replace('_', '')
+            shader_key = uniform_map.get(key, key.replace('_', ''))
             if key == 'IOR':
                 shader_key = 'IOR'
             self.sphere_node.setShaderInput(shader_key, value)

@@ -10,6 +10,7 @@ uniform float bloomIntensity;
 uniform float gamma;
 uniform bool enableBloom;
 uniform bool enableSSAO;
+uniform bool enableSSR;
 
 in vec2 texcoord;
 out vec4 fragColor;

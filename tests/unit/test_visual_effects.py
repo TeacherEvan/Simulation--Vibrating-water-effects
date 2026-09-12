@@ -624,6 +624,101 @@ class TestEdgeCases:
 
 
 # =============================================================================
+# Uniform-Name Correctness (catches silent setShaderInput no-ops)
+# =============================================================================
+
+class TestUniformNameMapping:
+    """
+    Verify that shader managers set uniforms using the exact names declared
+    in the .frag files (camelCase), NOT a blanket key.replace('_', '').
+
+    The existing tests use MagicMock nodes, so setShaderInput is a no-op and
+    cannot detect a wrong uniform name. A wrong name is silently ignored by
+    Panda3D at runtime, leaving the shader on its defaults.
+
+    These tests use a RecordingNode that records every setShaderInput call,
+    so the exact uniform names become assertions.
+    """
+
+    class _RecordingNode:
+        def __init__(self):
+            self.sets = {}
+            self._shader = None
+
+        def setShader(self, shader):
+            self._shader = shader
+
+        def setShaderInput(self, name, value):
+            self.sets[name] = value
+
+    def _make_water_manager(self):
+        from visual_effects_manager import WaterShaderManager
+
+        class _Base:
+            class cam:
+                @staticmethod
+                def getPos():
+                    return None
+
+        node = self._RecordingNode()
+        mgr = WaterShaderManager(_Base(), node)
+        return mgr, node
+
+    def _make_glass_manager(self):
+        from visual_effects_manager import GlassSphereShaderManager
+
+        class _Base:
+            class cam:
+                @staticmethod
+                def getPos():
+                    return None
+
+        node = self._RecordingNode()
+        mgr = GlassSphereShaderManager(_Base(), node)
+        return mgr, node
+
+    @pytest.mark.unit
+    def test_water_uniform_names_match_frag(self):
+        """WaterShaderManager must set camelCase uniforms matching water_surface.frag."""
+        _, node = self._make_water_manager()
+        expected = {
+            'waterColor', 'deepWaterColor', 'waveStrength', 'waveSpeed',
+            'shininess', 'foamThreshold', 'maxDepth', 'cameraPos',
+            'lightPos', 'lightColor',
+        }
+        actual = set(node.sets.keys())
+        missing = expected - actual
+        assert not missing, f"Uniforms never set (would be silent no-op at runtime): {sorted(missing)}"
+
+    @pytest.mark.unit
+    def test_water_uniform_names_not_underscored(self):
+        """No uniform name may contain an underscore (the old bug)."""
+        _, node = self._make_water_manager()
+        bad = [k for k in node.sets if '_' in k]
+        assert not bad, f"Underscored uniform names (unknown to shader): {bad}"
+
+    @pytest.mark.unit
+    def test_glass_uniform_names_match_frag(self):
+        """GlassSphereShaderManager must set camelCase uniforms matching glass_refraction.frag."""
+        _, node = self._make_glass_manager()
+        # 'time' is set in update(), not _setup_shader() — excluded here
+        expected = {
+            'IOR', 'chromaticAberration', 'tintColor', 'thickness',
+            'roughness', 'glowColor', 'glowIntensity', 'glowPower',
+            'interactionStrength', 'cameraPos',
+        }
+        actual = set(node.sets.keys())
+        missing = expected - actual
+        assert not missing, f"Uniforms never set (would be silent no-op at runtime): {sorted(missing)}"
+
+    @pytest.mark.unit
+    def test_glass_uniform_names_not_underscored(self):
+        """No uniform name may contain an underscore (the old bug)."""
+        _, node = self._make_glass_manager()
+        bad = [k for k in node.sets if '_' in k]
+        assert not bad, f"Underscored uniform names (unknown to shader): {bad}"
+
+# =============================================================================
 # Integration with Panda3D (Conditional)
 # =============================================================================
 
